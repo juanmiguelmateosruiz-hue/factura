@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidInvoice(data) {
+      return data.fileName is string && data.fileName.size() <= 255
+        && data.cubicMeters is number
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.batchId is string && data.batchId.size() <= 128
+        && (!('supplierName' in data) || (data.supplierName is string && data.supplierName.size() <= 255))
+        && (!('invoiceNumber' in data) || (data.invoiceNumber is string && data.invoiceNumber.size() <= 100))
+        && (!('serviceType' in data) || (data.serviceType is string && data.serviceType.size() <= 50))
+        && (!('totalAmount' in data) || (data.totalAmount is number))
+        && (!('taxAmount' in data) || (data.taxAmount is number))
+        && (!('currency' in data) || (data.currency is string && data.currency.size() <= 10))
+        && (!('status' in data) || (data.status is string && data.status.size() <= 50))
+        && (!('rawSnippet' in data) || (data.rawSnippet is string && data.rawSnippet.size() <= 2000));
+    }
+
+    function isValidBatch(data) {
+      return data.name is string && data.name.size() <= 255
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && data.status is string && data.status.size() <= 50
+        && (!('totalFiles' in data) || data.totalFiles is number)
+        && (!('processedFiles' in data) || data.processedFiles is number)
+        && (!('totalCubicMeters' in data) || data.totalCubicMeters is number)
+        && (!('totalAmount' in data) || data.totalAmount is number);
+    }
+
+    function isValidQueryRecord(data) {
+      return data.question is string && data.question.size() <= 1000
+        && data.answer is string && data.answer.size() <= 5000
+        && data.ownerId is string && data.ownerId.size() <= 128
+        && (!('matchedInvoicesCount' in data) || data.matchedInvoicesCount is number)
+        && (!('batchId' in data) || (data.batchId is string && data.batchId.size() <= 128));
+    }
+
+    // Invoices collection
+    match /invoices/{invoiceId} {
+      allow get: if isOwner(resource.data.ownerId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(invoiceId)
+        && incoming().ownerId == request.auth.uid
+        && isValidInvoice(incoming());
+      allow update: if isSignedIn()
+        && isValidId(invoiceId)
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && isValidInvoice(incoming());
+      allow delete: if isSignedIn()
+        && isValidId(invoiceId)
+        && isOwner(existing().ownerId);
+    }
+
+    // Batches collection
+    match /batches/{batchId} {
+      allow get: if isOwner(resource.data.ownerId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(batchId)
+        && incoming().ownerId == request.auth.uid
+        && isValidBatch(incoming());
+      allow update: if isSignedIn()
+        && isValidId(batchId)
+        && isOwner(existing().ownerId)
+        && incoming().ownerId == existing().ownerId
+        && isValidBatch(incoming());
+      allow delete: if isSignedIn()
+        && isValidId(batchId)
+        && isOwner(existing().ownerId);
+    }
+
+    // Queries collection
+    match /queries/{queryId} {
+      allow get: if isOwner(resource.data.ownerId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(queryId)
+        && incoming().ownerId == request.auth.uid
+        && isValidQueryRecord(incoming());
+      allow delete: if isSignedIn()
+        && isValidId(queryId)
+        && isOwner(existing().ownerId);
+    }
+  }
+}

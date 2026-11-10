@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Metadata and extracted telemetry from an uploaded invoice, including cubic meters consumption.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fileName": { "type": "string", "maxLength": 255 },
+        "fileSize": { "type": "number" },
+        "fileType": { "type": "string", "maxLength": 100 },
+        "supplierName": { "type": "string", "maxLength": 255 },
+        "invoiceNumber": { "type": "string", "maxLength": 100 },
+        "invoiceDate": { "type": "string", "maxLength": 50 },
+        "periodStart": { "type": "string", "maxLength": 50 },
+        "periodEnd": { "type": "string", "maxLength": 50 },
+        "cubicMeters": { "type": "number" },
+        "serviceType": { "type": "string", "maxLength": 50 },
+        "totalAmount": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 10 },
+        "status": { "type": "string", "maxLength": 50 },
+        "rawSnippet": { "type": "string", "maxLength": 2000 },
+        "batchId": { "type": "string", "maxLength": 128 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["fileName", "cubicMeters", "ownerId", "batchId"]
+    },
+    "Batch": {
+      "title": "Batch",
+      "description": "Represents an uploaded batch of invoices analyzed together.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 255 },
+        "totalFiles": { "type": "number" },
+        "processedFiles": { "type": "number" },
+        "totalCubicMeters": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "ownerId", "status"]
+    },
+    "QueryRecord": {
+      "title": "QueryRecord",
+      "description": "Natural language questions posed by the CFO and the synthesized answer based on invoice data.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "question": { "type": "string", "maxLength": 1000 },
+        "answer": { "type": "string", "maxLength": 5000 },
+        "matchedInvoicesCount": { "type": "number" },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "batchId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["question", "answer", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Collection of invoices and extracted data points like cubic meters."
+    },
+    "/batches/{batchId}": {
+      "schema": "Batch",
+      "description": "Collection of invoice batch metadata."
+    },
+    "/queries/{queryId}": {
+      "schema": "QueryRecord",
+      "description": "History of CFO questions and AI answers."
+    }
+  }
+}

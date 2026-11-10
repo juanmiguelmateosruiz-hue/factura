@@ -1,0 +1,6 @@
+{
+  "name": "FaturaIntel CFO - Extrator e Analisador de Metros Cúbicos",
+  "description": "Plataforma financeira para diretores financeiros de hotelaria: processamento em lote de 380 a 400 faturas, extração do consumo de metros cúbicos (m³), custos e fornecedores, e resposta analítica em linguagem natural.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
